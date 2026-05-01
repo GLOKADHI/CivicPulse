@@ -88,3 +88,100 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ─── Light Theme ─────────────────────────────────────────────────────────── */
+html.light-theme body {
+  background-color: #f0f4f8 !important;
+  background-image:
+    radial-gradient(at 0% 0%, #e2e8f0 0, transparent 40%),
+    radial-gradient(at 50% 0%, #dde8ff 0, transparent 40%),
+    radial-gradient(at 100% 0%, #f0f4f8 0, transparent 40%) !important;
+  color: #0f172a !important;
+}
+
+html.light-theme .glass {
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 0.25rem 1.5rem -0.0625rem rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light-theme .gold-glass {
+  background: rgba(212, 175, 55, 0.06) !important;
+  border-color: rgba(212, 175, 55, 0.25) !important;
+}
+
+html.light-theme header,
+html.light-theme nav {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light-theme footer {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Override dark text utility classes */
+html.light-theme .text-slate-100 { color: #0f172a !important; }
+html.light-theme .text-slate-200 { color: #1e293b !important; }
+html.light-theme .text-slate-300 { color: #334155 !important; }
+html.light-theme .text-slate-400 { color: #475569 !important; }
+html.light-theme .text-slate-500 { color: #64748b !important; }
+html.light-theme .text-slate-600 { color: #94a3b8 !important; }
+html.light-theme .bg-\[\#05070a\]  { background-color: #f0f4f8 !important; }
+html.light-theme .bg-black\/40     { background-color: rgba(255,255,255,0.75) !important; }
+html.light-theme .bg-black\/90     { background-color: rgba(240,244,248,0.96) !important; }
+html.light-theme .bg-white\/5      { background-color: rgba(0,0,0,0.04) !important; }
+html.light-theme .bg-white\/\[0\.03\] { background-color: rgba(0,0,0,0.02) !important; }
+html.light-theme .border-white\/5  { border-color: rgba(0,0,0,0.07) !important; }
+html.light-theme .border-white\/10 { border-color: rgba(0,0,0,0.1) !important; }
+html.light-theme .border-white\/20 { border-color: rgba(0,0,0,0.15) !important; }
+
+/* Fixed panels in light mode */
+html.light-theme [class*="fixed"][class*="glass"],
+html.light-theme [class*="fixed"] .glass {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+/* ─── High Contrast ───────────────────────────────────────────────────────── */
+html.high-contrast {
+  filter: contrast(1.4) saturate(1.3);
+}
+
+html.high-contrast .text-slate-500,
+html.high-contrast .text-slate-600 {
+  opacity: 1 !important;
+  color: inherit !important;
+}
+
+html.high-contrast .glass {
+  border-width: 2px !important;
+  border-color: rgba(212, 175, 55, 0.5) !important;
+}
+
+html.high-contrast .active-step {
+  outline: 2px solid #D4AF37;
+}
+
+/* ─── Reduced Motion ──────────────────────────────────────────────────────── */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Toast notification entry */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(2rem); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes toast-out {
+  from { opacity: 1; }
+  to   { opacity: 0; transform: translateX(2rem); }
+}
+.toast-enter { animation: toast-in 0.25s ease forwards; }
+

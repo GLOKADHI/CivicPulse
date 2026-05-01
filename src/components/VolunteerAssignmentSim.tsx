@@ -24,8 +24,8 @@ export default function VolunteerAssignmentSim({ onComplete, volunteerData, addA
   const [approved, setApproved] = useState<boolean | null>(null);
 
   const results = volunteerData?.quizResults;
-  const isEligible = results?.eligibility === 'Eligible';
-  const needsTraining = results?.eligibility === 'Needs Training';
+  const isEligible = results?.eligibility === 'Approved';
+  const needsTraining = results?.eligibility === 'Training Required';
 
   const handleProcess = () => {
     setIsProcessing(true);
@@ -34,11 +34,14 @@ export default function VolunteerAssignmentSim({ onComplete, volunteerData, addA
     }
     setTimeout(() => {
       setIsProcessing(false);
-      setApproved(isEligible);
+      // Allow both Approved and Training Required to pass for the demo/simulation
+      const isCleared = results?.eligibility === 'Approved' || results?.eligibility === 'Training Required';
+      setApproved(isCleared);
       
       if (addAssistantMessage) {
-        if (isEligible) {
-            addAssistantMessage("Audit finalized: Access Granted. You've been assigned to the Neural Audit Node based on your high accuracy score.", 'success');
+        if (isCleared) {
+            const node = results?.eligibility === 'Approved' ? 'Neural Audit Node' : 'Secondary Support Node';
+            addAssistantMessage(`Audit finalized: Access Granted. You've been assigned to the ${node} based on your performance profile.`, 'success');
         } else {
             addAssistantMessage("Audit finalized: Access Deferred. Your performance profile requires additional training before node deployment.", 'alert');
         }
@@ -152,8 +155,8 @@ export default function VolunteerAssignmentSim({ onComplete, volunteerData, addA
                  </div>
                  <div>
                     <span className="text-[0.5rem] font-black text-emerald-500/60 uppercase tracking-[0.4em]">Audit Status</span>
-                    <h3 className="text-[1.5rem] font-black text-white uppercase tracking-tighter">Approved</h3>
-                    <p className="text-[0.625rem] text-slate-400 font-medium">Ready for node deployment in the 2026 cycle.</p>
+                    <h3 className="text-[1.5rem] font-black text-white uppercase tracking-tighter">{results?.eligibility === 'Approved' ? 'Full Clearance' : 'Conditional Clearance'}</h3>
+                    <p className="text-[0.625rem] text-slate-400 font-medium">Assigned to: {results?.eligibility === 'Approved' ? 'Neural Audit Node' : 'Secondary Support Node'}</p>
                  </div>
               </div>
 

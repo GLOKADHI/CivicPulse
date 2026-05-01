@@ -2,9 +2,13 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Send, User, Bot, Loader2, Info, Sparkles, ArrowUpRight, ChevronRight, Zap, Target, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { chatWithAssistant } from '../services/gemini';
+import { analyzeSentiment } from '../services/nlp';
+import { logElectionQuery } from '../services/firestore';
+import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
 import { UserRole } from '../constants/election';
 import { Message } from '../types';
+import { useSettings } from '../context/SettingsContext';
 
 interface AIChatProps {
   role?: UserRole;
@@ -14,6 +18,8 @@ interface AIChatProps {
 }
 
 export default function AIChat({ role = 'voter', messages, onSendMessage, setMessages }: AIChatProps) {
+  const { t } = useSettings();
+  const { user } = useAuth();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [processingNotice, setProcessingNotice] = useState(false);
@@ -80,6 +86,12 @@ export default function AIChat({ role = 'voter', messages, onSendMessage, setMes
     }, 15000); // 15s timeout
 
     try {
+      // Analyze Sentiment (Google Cloud NLP)
+      const sentiment = await analyzeSentiment(textToSend);
+      
+      // Log to Firestore
+      logElectionQuery(user?.uid, textToSend, sentiment);
+
       const history = messages.map(m => ({
         role: m.role,
         parts: [{ text: m.content }]
@@ -125,16 +137,16 @@ export default function AIChat({ role = 'voter', messages, onSendMessage, setMes
             <Sparkles size={28} className="fill-current" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-[0.6875rem] font-black text-gold uppercase tracking-[0.4em] truncate">CivicPulse Intelligence</h2>
+            <h2 className="text-[0.6875rem] font-black text-gold uppercase tracking-[0.4em] truncate">{t('civicPulseIntel')}</h2>
             <p className="text-[0.5625rem] text-slate-500 font-black uppercase tracking-[0.3em] mt-[0.375rem] opacity-60 truncate">
-               GUIDANCE MODE: <span className="text-gold/80">{role.toUpperCase()} CONTEXT</span>
+               {t('guidanceMode')}: <span className="text-gold/80">{role.toUpperCase()} CONTEXT</span>
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
            <div className="hidden sm:flex items-center gap-[0.75rem] px-[1.25rem] py-[0.5rem] glass text-emerald-400 rounded-full text-[0.625rem] font-black tracking-[0.3em] border border-emerald-500/20 uppercase shadow-lg shadow-emerald-500/5 shrink-0">
               <Activity size={12} className="animate-pulse" />
-              Real-time Sync
+              {t('realTimeSync')}
            </div>
         </div>
       </div>
@@ -175,7 +187,7 @@ export default function AIChat({ role = 'voter', messages, onSendMessage, setMes
               </div>
               <div className="flex items-center gap-2">
                  <p className="text-[0.5rem] font-black text-slate-700 uppercase tracking-widest truncate">
-                    {m.role === 'user' ? 'Direct Input' : m.type === 'guidance' ? 'System Instruction' : 'AI Analysis'}
+                    {m.role === 'user' ? t('directInput') : m.type === 'guidance' ? t('sysInstruction') : t('aiAnalysis')}
                  </p>
                  <div className="w-1 h-1 rounded-full bg-slate-800" />
                  <p className="text-[0.5rem] font-bold text-slate-800 uppercase tabular-nums">
@@ -191,7 +203,7 @@ export default function AIChat({ role = 'voter', messages, onSendMessage, setMes
               <Loader2 size={18} className="animate-spin text-gold" />
             </div>
             <div className="p-[1.5rem] rounded-[2rem] rounded-tl-none text-[0.7rem] font-black glass border border-white/10 text-gold flex items-center gap-[0.75rem] tracking-[0.2em] shadow-2xl">
-              {processingNotice ? 'PROCESSING DEPTH...' : 'SYNTHESIZING...'}
+              {processingNotice ? t('processing') : t('synthesizing')}
             </div>
           </div>
         )}
@@ -203,7 +215,7 @@ export default function AIChat({ role = 'voter', messages, onSendMessage, setMes
           <div className="mb-[1.5rem] min-w-0">
             <div className="flex items-center gap-[0.75rem] mb-[1rem] opacity-50">
                <ArrowUpRight size={12} className="text-gold" />
-               <span className="text-[0.5625rem] font-black text-slate-500 uppercase tracking-[0.4em]">Suggested Questions</span>
+               <span className="text-[0.5625rem] font-black text-slate-500 uppercase tracking-[0.4em]">{t('suggestedQuestions')}</span>
             </div>
             <div className="flex flex-wrap gap-[0.75rem]">
                {suggestions.map((q, i) => (
@@ -220,11 +232,15 @@ export default function AIChat({ role = 'voter', messages, onSendMessage, setMes
           </div>
         )}
 
-        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative group">
+        <form 
+          aria-label="Election Assistant Chat"
+          onSubmit={(e) => { e.preventDefault(); handleSend(); }} 
+          className="relative group"
+        >
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask a question about the election process..."
+            placeholder={t('askQuestion')}
             className="w-full glass border border-white/10 rounded-[1.75rem] pl-[2rem] pr-[4rem] py-[1.5rem] text-[0.875rem] font-medium text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-gold/40 focus:gold-glow transition-all shadow-inner"
             disabled={loading}
           />
@@ -241,7 +257,7 @@ export default function AIChat({ role = 'voter', messages, onSendMessage, setMes
             <Info size={12} />
           </div>
           <p className="text-[0.5625rem] text-slate-500 text-center uppercase tracking-[0.4em] font-black leading-none">
-            Secure Election Assistant Session
+            {t('secureSession')}
           </p>
         </div>
       </div>

@@ -29,9 +29,15 @@ import AIChat from './AIChat';
 import ProcessTimeline from './ProcessTimeline';
 import PollingBoothSim from './PollingBoothSim';
 import MapComp from './MapComp';
+import GoogleMapsEmbed from './GoogleMapsEmbed';
 import AlertsPanel from './AlertsPanel';
+import SettingsPanel from './SettingsPanel';
 import { cn } from '../lib/utils';
 import { Message, AssistantEvent } from '../types';
+import { useSettings } from '../context/SettingsContext';
+import { useAuth } from '../context/AuthContext';
+import { logUserJourney } from '../services/firestore';
+import { logAnalyticsEvent } from '../lib/firebase';
 
 interface DashboardProps {
   role: UserRole;
@@ -44,10 +50,25 @@ const MOCK_ANAYLTICS = [
 ];
 
 export default function Dashboard({ role, onReset, onRoleChange }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<'journey' | 'ai' | 'map'>('journey');
+  const { t } = useSettings();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<'journey' | 'ai' | 'map' | 'locations'>('journey');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [completedIndices, setCompletedIndices] = useState<number[]>([]);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Log Journey Start
+  React.useEffect(() => {
+    logUserJourney(user?.uid, role, 'initialization', 'dashboard_loaded');
+    logAnalyticsEvent('journey_start', { role, userId: user?.uid });
+  }, [role, user]);
+
+  // Log Tab Changes
+  React.useEffect(() => {
+    logUserJourney(user?.uid, role, 'navigation', `tab_switched_${activeTab}`);
+    logAnalyticsEvent('tab_switch', { role, tab: activeTab });
+  }, [activeTab]);
 
   // Assistant State
   const [messages, setMessages] = useState<Message[]>([
@@ -118,7 +139,7 @@ export default function Dashboard({ role, onReset, onRoleChange }: DashboardProp
   const [registrationData, setRegistrationData] = useState<any>(null);
   const [candidateData, setCandidateData] = useState<any>(null);
   const [candidateAuditResult, setCandidateAuditResult] = useState<any>(null);
-  const [volunteerData, setVolunteerData] = useState<any>(null);
+  const [volunteerData, setVolunteerData] = useState<any>({});
   const [electionId, setElectionId] = useState<string>('');
   const [ballotPdfUrl, setBallotPdfUrl] = useState<string>('');
   const [trackingId, setTrackingId] = useState<string>('');
@@ -140,9 +161,10 @@ export default function Dashboard({ role, onReset, onRoleChange }: DashboardProp
   };
 
   const tabs = [
-    { id: 'journey', label: 'Election Journey', icon: Clock, progress: globalProgress },
-    { id: 'ai', label: 'Election Assistant', icon: MessageSquare, progress: 100 },
-    { id: 'map', label: 'Polling Map', icon: MapIcon, progress: 85 },
+    { id: 'journey', label: t('electionJourney'), icon: Clock, progress: globalProgress },
+    { id: 'ai', label: t('electionAssistant'), icon: MessageSquare, progress: 100 },
+    { id: 'map', label: t('pollingMap'), icon: MapIcon, progress: 85 },
+    { id: 'locations', label: t('findLocations') || 'Locations', icon: MapPin, progress: 90 },
   ];
 
   return (
@@ -159,6 +181,7 @@ export default function Dashboard({ role, onReset, onRoleChange }: DashboardProp
           <button 
             onClick={onReset}
             className="p-[0.75rem] glass hover:bg-gold/10 rounded-[1rem] transition-all text-slate-500 hover:text-gold border border-white/5 group overflow-hidden relative"
+            aria-label="Return to Identity Phase"
             title="Return to Identity Phase"
           >
             <ArrowLeft size={18} className="relative z-10 transition-transform group-hover:-translate-x-1" />
@@ -168,11 +191,11 @@ export default function Dashboard({ role, onReset, onRoleChange }: DashboardProp
               <img src="/images/logo.png" alt="CivicPulse Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
             </div>
             <div className="flex flex-col">
-              <h1 className="font-black text-[1.25rem] tracking-[0.2em] uppercase leading-none">CivicPulse</h1>
+              <h1 className="font-black text-[1.25rem] tracking-[0.2em] uppercase leading-none">{t('appName')}</h1>
               <div className="flex items-center gap-[0.5rem] mt-[0.5rem]">
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[0.3em] text-gold/80">{role} Assistant</span>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[0.3em] text-gold/80">{role} {t('assistant')}</span>
                 <div className="w-[0.25rem] h-[0.25rem] rounded-full bg-slate-800" />
-                <span className="text-[0.5625rem] font-medium uppercase tracking-[0.3em] text-slate-500">Live Information</span>
+                <span className="text-[0.5625rem] font-medium uppercase tracking-[0.3em] text-slate-500">{t('liveInfo')}</span>
               </div>
             </div>
           </div>
@@ -241,7 +264,8 @@ export default function Dashboard({ role, onReset, onRoleChange }: DashboardProp
            
            <div className="flex items-center gap-[1rem]">
               <button 
-                onClick={() => setShowAlerts(!showAlerts)}
+                onClick={() => { setShowAlerts(!showAlerts); setShowSettings(false); }}
+                aria-label="Toggle Election Alerts"
                 className={cn(
                   "p-[0.75rem] glass rounded-[1rem] transition-all relative",
                   showAlerts ? "text-gold bg-gold/10 border-gold/40" : "text-slate-500 hover:text-gold"
@@ -250,7 +274,14 @@ export default function Dashboard({ role, onReset, onRoleChange }: DashboardProp
                 <Bell size={18} />
                 <div className="absolute top-[0.625rem] right-[0.625rem] w-1.5 h-1.5 bg-gold rounded-full border-2 border-black" />
               </button>
-              <button className="p-[0.75rem] glass rounded-[1rem] text-slate-500 hover:text-gold transition-all">
+              <button 
+                onClick={() => { setShowSettings(!showSettings); setShowAlerts(false); }}
+                aria-label="Toggle Assistant Settings"
+                className={cn(
+                  "p-[0.75rem] glass rounded-[1rem] transition-all",
+                  showSettings ? "text-gold bg-gold/10 border-gold/40" : "text-slate-500 hover:text-gold"
+                )}
+              >
                 <Settings size={18} />
               </button>
            </div>
@@ -260,6 +291,9 @@ export default function Dashboard({ role, onReset, onRoleChange }: DashboardProp
       <AnimatePresence>
         {showAlerts && (
           <AlertsPanel isOpen={showAlerts} onClose={() => setShowAlerts(false)} />
+        )}
+        {showSettings && (
+          <SettingsPanel isOpen={showSettings} onClose={() => setShowSettings(false)} />
         )}
       </AnimatePresence>
 
@@ -275,6 +309,7 @@ export default function Dashboard({ role, onReset, onRoleChange }: DashboardProp
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
+                  aria-label={`Switch to ${tab.label} section`}
                   className={cn(
                     "flex items-center gap-[1rem] p-[1.5rem] rounded-[1.5rem] transition-all group border border-transparent shrink-0",
                     activeTab === tab.id 
@@ -361,6 +396,7 @@ export default function Dashboard({ role, onReset, onRoleChange }: DashboardProp
                 />
               )}
               {activeTab === 'map' && <MapComp />}
+              {activeTab === 'locations' && <GoogleMapsEmbed query="polling booths near me" />}
             </motion.div>
           </AnimatePresence>
         </div>

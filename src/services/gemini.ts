@@ -8,6 +8,13 @@ if (apiKey) {
   ai = new GoogleGenAI({ apiKey });
 }
 
+/**
+ * Communicates with the Gemini AI model to generate non-partisan election guidance.
+ * @param message - The user's query or message.
+ * @param history - Optional chat history for context-aware responses.
+ * @returns The AI's text response.
+ * @throws Error if the API key is missing or the request fails.
+ */
 export async function chatWithAssistant(message: string, history: { role: 'user' | 'model', parts: { text: string }[] }[] = []) {
   if (!ai) {
     throw new Error("Gemini API key is missing. Please configure it in the Secrets panel.");
@@ -15,7 +22,7 @@ export async function chatWithAssistant(message: string, history: { role: 'user'
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.0-flash",
       contents: [
         {
           role: "user",

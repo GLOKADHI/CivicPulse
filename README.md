@@ -133,7 +133,3 @@ Try another browser if interactions are not responding correctly.
 
 Intended purpose
 This website is intended as an educational and guidance-based election assistant. It helps users understand the process better through role-specific, interactive learning.
-1. Install dependencies:
-   `npm install`
-3. Run the app:
-   `npm run dev`

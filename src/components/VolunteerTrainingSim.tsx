@@ -125,8 +125,8 @@ export default function VolunteerTrainingSim({ onComplete, addAssistantMessage }
 
     const percentage = (score / QUIZ_QUESTIONS.length) * 100;
     let eligibility: 'Approved' | 'Training Required' | 'Not Approved' = 'Not Approved';
-    if (percentage >= 85) eligibility = 'Approved';
-    else if (percentage >= 70) eligibility = 'Training Required';
+    if (percentage >= 70) eligibility = 'Approved';
+    else if (percentage >= 50) eligibility = 'Training Required';
 
     return { score, total: QUIZ_QUESTIONS.length, percentage, categoryStats, eligibility };
   };
@@ -195,9 +195,8 @@ export default function VolunteerTrainingSim({ onComplete, addAssistantMessage }
   };
 
   const getAIFeedback = () => {
-    if (!results) return "";
-    if (results.eligibility === 'Approved') return "Exceptional performance documented. Your ethical alignment and process accuracy meet the criteria for Level 1 Node Deployment. Certification authorized.";
-    if (results.eligibility === 'Training Required') return "Adequate baseline, but critical gaps in Crisis Response detected. Supplemental training modules have been unlocked. Please review before field deployment.";
+    if (results.eligibility === 'Approved') return "Exceptional performance documented. Your ethical alignment and process accuracy meet the criteria for Node Deployment. Certification authorized.";
+    if (results.eligibility === 'Training Required') return "Adequate baseline, but some gaps in Crisis Response detected. Supplemental guidance unlocked. Please review before field deployment.";
     return "Operational integrity alignment failed. Your responses indicate risk profiles outside acceptable regional variance. Re-testing is mandatory after deep-study of the Election NDA.";
   };
 
